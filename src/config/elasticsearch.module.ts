@@ -7,6 +7,6 @@ dotenv.config();
 
 @Module({
   imports: [ElasticsearchModule.register(elasticsearchConfig)],
-  exports: [ElasticsearchModule], // Make ElasticsearchService available
+  exports: [ElasticsearchModule],
 })
 export class CustomElasticsearchModule {}

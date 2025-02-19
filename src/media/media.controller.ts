@@ -1,6 +1,14 @@
-import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Query,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { SearchMediaDto } from './dto/media.dto';
 import { MediaService } from './media.service';
+import { MediaResponse } from 'src/interfaces/media.interface';
 
 @Controller('media')
 export class MediaController {
@@ -12,16 +20,19 @@ export class MediaController {
   }
 
   @Get('search')
-  async searchMedia(@Query() searchMediaDto: SearchMediaDto) {
-    const { querystring, datecreated1, datecreated2 } = searchMediaDto;
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async searchMedia(
+    @Query() searchMediaDto: SearchMediaDto,
+  ): Promise<MediaResponse[]> {
+    const { querystring, dateCreated1, dateCreated2 } = searchMediaDto;
     if (!querystring) {
       throw new BadRequestException('Query parameter is required');
     }
 
     return this.mediaService.searchMedia(
       querystring,
-      datecreated1,
-      datecreated2,
+      dateCreated1,
+      dateCreated2,
     );
   }
 }

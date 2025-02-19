@@ -1,4 +1,9 @@
-import { IsNotEmpty, IsOptional, IsString, IsISO8601 } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsDateString,
+} from 'class-validator';
 
 export class SearchMediaDto {
   @IsNotEmpty({ message: 'Query string is required' })
@@ -6,16 +11,10 @@ export class SearchMediaDto {
   querystring: string;
 
   @IsOptional()
-  @IsISO8601(
-    {},
-    { message: 'start date must be a valid YYYY-MM-DD date format' },
-  )
-  datecreated1?: string;
+  @IsDateString({}, { message: 'start date must be a valid format' })
+  dateCreated1?: string;
 
   @IsOptional()
-  @IsISO8601(
-    {},
-    { message: 'end date must be a valid  YYYY-MM-DD date format' },
-  )
-  datecreated2?: string;
+  @IsDateString({}, { message: 'end date must be a valid  format' })
+  dateCreated2?: string;
 }

@@ -96,8 +96,10 @@ export class MediaService {
         })
         .filter((item) => item !== undefined) as MediaResponse[];
     } catch (error) {
-      this.logger.error('Error searching media:', error);
-      throw error;
+      this.logger.error('Error searching media:', error.message);
+      throw new Error(
+        'An error occurred while searching for media. Please try again later.',
+      );
     }
   }
 }
