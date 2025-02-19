@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import * as dotenv from 'dotenv';
+import { MediaResponse, MediaSource } from 'src/interfaces/media.interface';
 dotenv.config();
 
 @Injectable()
@@ -23,16 +24,39 @@ export class MediaService {
     }
   }
 
-  async searchMedia(query: string) {
+  async searchMedia(
+    query: string,
+    dateCreated1?: string,
+    dateCreated2?: string,
+  ): Promise<MediaResponse[]> {
     try {
-      const response = await this.elasticsearchService.search({
+      const boolQuery: any = {
+        must: [
+          {
+            multi_match: {
+              query,
+              fields: ['suchtext', 'fotografen'],
+            },
+          },
+        ],
+        filter: [],
+      };
+      if (dateCreated1 && dateCreated2) {
+        boolQuery.filter.push({
+          range: {
+            datum: {
+              gte: dateCreated1,
+              lte: dateCreated2,
+              format: 'yyyy-MM-dd',
+            },
+          },
+        });
+      }
+      const result = await this.elasticsearchService.search({
         index: process.env.ELASTICSEARCH_INDEX,
         body: {
           query: {
-            multi_match: {
-              query,
-              fields: ['suchtext'],
-            },
+            bool: boolQuery,
           },
           _source: [
             'bildnummer',
@@ -45,9 +69,32 @@ export class MediaService {
           ], // fetch specific fields
         },
       });
-      this.logger.log(`Searching media for query: ${query}`);
+      if (dateCreated1 && dateCreated2) {
+        this.logger.log(
+          `Searching media for query: ${query} between dates: ${dateCreated1} and ${dateCreated2}`,
+        );
+      } else {
+        this.logger.log(`Searching media for query: ${query}`);
+      }
 
-      return response.hits.hits.map((hit) => hit._source);
+      return (result.hits?.hits || [])
+        .map((hit) => {
+          const source = hit._source as MediaSource;
+          const suchtext = source.suchtext || '';
+          const title = suchtext;
+          const description = suchtext;
+          return {
+            id: source.bildnummer,
+            title,
+            description,
+            photographer: source.fotografen,
+            height: source.hoehe,
+            width: source.breite,
+            date: source.datum,
+            source: source.db,
+          };
+        })
+        .filter((item) => item !== undefined) as MediaResponse[];
     } catch (error) {
       this.logger.error('Error searching media:', error);
       throw error;
