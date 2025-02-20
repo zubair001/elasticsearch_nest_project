@@ -11,16 +11,16 @@ export class MediaService {
   constructor(private readonly elasticsearchService: ElasticsearchService) {}
 
   async onModuleInit() {
-    this.logger.log('Initializing MediaService...');
+    this.logger.log('Initializing Media Service...');
     await this.checkElasticsearchConnection();
   }
 
   async checkElasticsearchConnection(): Promise<void> {
     try {
       await this.elasticsearchService.ping();
-      this.logger.log('✅ Successfully connected to Elasticsearch');
+      this.logger.log('Successfully connected to Elasticsearch');
     } catch (error) {
-      this.logger.error('❌ Elasticsearch connection failed:', error.message);
+      this.logger.error('Elasticsearch connection failed:', error.message);
     }
   }
 
@@ -28,6 +28,9 @@ export class MediaService {
     query: string,
     dateCreated1?: string,
     dateCreated2?: string,
+    sortBy: 'asc' | 'desc' = 'desc',
+    page?: number,
+    size?: number,
   ): Promise<MediaResponse[]> {
     try {
       const boolQuery: any = {
@@ -35,7 +38,18 @@ export class MediaService {
           {
             multi_match: {
               query,
-              fields: ['suchtext', 'fotografen'],
+              fields: [
+                'suchtext^3',
+                'fotografen^2',
+                'bildnummer',
+                'db',
+                'datum',
+                'hoehe',
+                'breite',
+              ],
+              type: 'cross_fields',
+              operator: 'and',
+              fuzziness: 'AUTO',
             },
           },
         ],
@@ -66,7 +80,10 @@ export class MediaService {
             'hoehe',
             'breite',
             'db',
-          ], // fetch specific fields
+          ],
+          from: page || 0,
+          size: size || 10,
+          sort: [{ datum: { order: sortBy } }],
         },
       });
       if (dateCreated1 && dateCreated2) {

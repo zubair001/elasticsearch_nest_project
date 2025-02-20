@@ -1,5 +1,5 @@
 # Use official Node.js image as base
-FROM node:18-alpine
+FROM node:20-alpine AS build
 
 # Set working directory
 WORKDIR /usr/src/app
@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install dependencies and remove unnecessary files to reduce image size
-RUN npm install --only=development
+RUN npm install
 
 # Copy the rest of the application files
 COPY . .
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Expose the port your app runs on
-EXPOSE 3000
+EXPOSE 5000
 
 # Command to run the application
 CMD ["npm", "run", "start"]
