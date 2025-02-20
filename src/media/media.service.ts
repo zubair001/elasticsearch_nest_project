@@ -52,8 +52,23 @@ export class MediaService {
               fuzziness: 'AUTO',
             },
           },
+          {
+            prefix: {
+              suchtext: {
+                value: query,
+                boost: 3,
+              },
+            },
+          },
         ],
-        filter: [],
+        filter: [
+          {
+            term: {
+              fotografen: query,
+              db: query,
+            },
+          },
+        ],
       };
       if (dateCreated1 && dateCreated2) {
         boolQuery.filter.push({
