@@ -24,10 +24,23 @@ export class MediaService {
     }
   }
 
+  /**
+   * Searches for media based on the provided query and optional filters.
+   *
+   * @param {string} query - The search query string.
+   * @param {string} [startDate] - The start date for filtering media.
+   * @param {string} [endDate] - The end date for filtering media.
+   * @param {'asc' | 'desc'} [sortBy='desc'] - The sort order for the search results based on the date.
+   * @param {number} [page=0] - The page number for pagination.
+   * @param {number} [size=10] - The number of results per page.
+   * @returns {Promise<MediaResponse[]>} - A promise that resolves to an array of media responses.
+   * @throws {Error} - Throws an error if the search operation fails.
+   */
+
   async searchMedia(
     query: string,
-    dateCreated1?: string,
-    dateCreated2?: string,
+    startDate?: string,
+    endDate?: string,
     sortBy: 'asc' | 'desc' = 'desc',
     page?: number,
     size?: number,
@@ -38,17 +51,8 @@ export class MediaService {
           {
             multi_match: {
               query,
-              fields: [
-                'suchtext^3',
-                'fotografen^2',
-                'bildnummer',
-                'db',
-                'datum',
-                'hoehe',
-                'breite',
-              ],
-              type: 'cross_fields',
-              operator: 'and',
+              fields: ['suchtext^3', 'fotografen^2', 'db'],
+              type: 'best_fields',
               fuzziness: 'AUTO',
             },
           },
@@ -61,21 +65,14 @@ export class MediaService {
             },
           },
         ],
-        filter: [
-          {
-            term: {
-              fotografen: query,
-              db: query,
-            },
-          },
-        ],
+        filter: [],
       };
-      if (dateCreated1 && dateCreated2) {
+      if (startDate && endDate) {
         boolQuery.filter.push({
           range: {
             datum: {
-              gte: dateCreated1,
-              lte: dateCreated2,
+              gte: startDate,
+              lte: endDate,
               format: 'yyyy-MM-dd',
             },
           },
@@ -101,9 +98,9 @@ export class MediaService {
           sort: [{ datum: { order: sortBy } }],
         },
       });
-      if (dateCreated1 && dateCreated2) {
+      if (startDate && endDate) {
         this.logger.log(
-          `Searching media for query: ${query} between dates: ${dateCreated1} and ${dateCreated2}`,
+          `Searching media for query: ${query} between dates: ${startDate} and ${endDate}`,
         );
       } else {
         this.logger.log(`Searching media for query: ${query}`);
@@ -113,8 +110,8 @@ export class MediaService {
         .map((hit) => {
           const source = hit._source as MediaSource;
           const suchtext = source.suchtext || '';
-          const title = suchtext;
-          const description = suchtext;
+          const title = suchtext ? suchtext : 'No title';
+          const description = suchtext ? suchtext : 'No description';
           return {
             id: source.bildnummer,
             title,

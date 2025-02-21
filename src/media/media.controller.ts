@@ -24,7 +24,7 @@ export class MediaController {
   async searchMedia(
     @Query() searchMediaDto: SearchMediaDto,
   ): Promise<MediaResponse[]> {
-    const { querystring, dateCreated1, dateCreated2, sortBy, page, size } =
+    const { querystring, startDate, endDate, sortBy, page, size } =
       searchMediaDto;
     if (!querystring) {
       throw new BadRequestException('Query parameter is required');
@@ -32,8 +32,8 @@ export class MediaController {
 
     return this.mediaService.searchMedia(
       querystring,
-      dateCreated1,
-      dateCreated2,
+      startDate,
+      endDate,
       sortBy,
       page,
       size,
