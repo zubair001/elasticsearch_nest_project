@@ -1,15 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // Enable CORS
   app.enableCors({
-    origin: 'http://localhost:5173', // Allow only your frontend origin
+    origin: process.env.FRONTEND_URL, // Allow only your frontend origin
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allowed HTTP methods
     credentials: true, // Allow cookies and credentials
   });
 
-  await app.listen(process.env.PORT ?? 5000);
+  // Add logger
+  app.useLogger(app.get(Logger));
+
+  await app.listen(process.env.PORT);
 }
 bootstrap();

@@ -1,24 +1,30 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import * as dotenv from 'dotenv';
+import { PinoLogger } from 'nestjs-pino';
 import { MediaResponse, MediaSource } from 'src/interfaces/media.interface';
 dotenv.config();
 
 @Injectable()
 export class MediaService {
-  private readonly logger = new Logger(MediaService.name);
+  private readonly logger: PinoLogger;
 
-  constructor(private readonly elasticsearchService: ElasticsearchService) {}
+  constructor(
+    private readonly elasticsearchService: ElasticsearchService,
+    logger: PinoLogger,
+  ) {
+    this.logger = logger;
+  }
 
   async onModuleInit() {
-    this.logger.log('Initializing Media Service...');
+    this.logger.info('Initializing Media Service...');
     await this.checkElasticsearchConnection();
   }
 
   async checkElasticsearchConnection(): Promise<void> {
     try {
       await this.elasticsearchService.ping();
-      this.logger.log('Successfully connected to Elasticsearch');
+      this.logger.info('Successfully connected to Elasticsearch');
     } catch (error) {
       this.logger.error('Elasticsearch connection failed:', error.message);
     }
@@ -99,11 +105,11 @@ export class MediaService {
         },
       });
       if (startDate && endDate) {
-        this.logger.log(
+        this.logger.info(
           `Searching media for query: ${query} between dates: ${startDate} and ${endDate}`,
         );
       } else {
-        this.logger.log(`Searching media for query: ${query}`);
+        this.logger.info(`Searching media for query: ${query}`);
       }
 
       return (result.hits?.hits || [])
